@@ -14,6 +14,10 @@ import classic from "@/assets/images/template-cover/classic.png";
 import modern from "@/assets/images/template-cover/modern.png";
 import leftRight from "@/assets/images/template-cover/left-right.png";
 import timeline from "@/assets/images/template-cover/timeline.png";
+import classicVertical from "@/assets/images/template-cover/classsic-vertical.png";
+import graySplit from "@/assets/images/template-cover/gray-split.png";
+import popularColumns from "@/assets/images/template-cover/popular-columns.png";
+import demoThree from "@/assets/images/template-cover/demo-three.png";
 
 import { cn } from "@/lib/utils";
 import { DEFAULT_TEMPLATES } from "@/config";
@@ -23,6 +27,18 @@ const templateImages: Record<string, StaticImageData> = {
   modern,
   "left-right": leftRight,
   timeline,
+  "classic-vertical": classicVertical,
+  "gray-split": graySplit,
+  "popular-columns": popularColumns,
+  "demo-three": demoThree,
+};
+
+const translationKeyMap: Record<string, string> = {
+  "left-right": "leftRight",
+  "classic-vertical": "classicVertical",
+  "gray-split": "graySplit",
+  "popular-columns": "popularColumns",
+  "demo-three": "demoThree",
 };
 
 const container = {
@@ -90,8 +106,7 @@ const TemplatesPage = () => {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
         >
           {DEFAULT_TEMPLATES.map((template) => {
-            const templateKey =
-              template.id === "left-right" ? "leftRight" : template.id;
+            const templateKey = translationKeyMap[template.id] || template.id;
             return (
               <motion.div key={template.id} variants={item}>
                 <Card
@@ -173,9 +188,8 @@ const TemplatesPage = () => {
                   <DialogTitle className="text-lg font-medium">
                     {t(
                       `${
-                        previewTemplate.id === "left-right"
-                          ? "leftRight"
-                          : previewTemplate.id
+                        translationKeyMap[previewTemplate.id] ||
+                        previewTemplate.id
                       }.name`
                     )}
                   </DialogTitle>
@@ -186,9 +200,8 @@ const TemplatesPage = () => {
                       src={templateImages[previewTemplate.id]}
                       alt={t(
                         `${
-                          previewTemplate.id === "left-right"
-                            ? "leftRight"
-                            : previewTemplate.id
+                          translationKeyMap[previewTemplate.id] ||
+                          previewTemplate.id
                         }.name`
                       )}
                       width={600}
