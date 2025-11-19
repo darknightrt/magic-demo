@@ -26,18 +26,16 @@ const DemoThreeTemplate: React.FC<DemoThreeTemplateProps> = ({
 }) => {
   const accentColor =
     data.globalSettings?.themeColor || template.colorScheme.primary;
-  const secondaryColor = template.colorScheme.secondary;
+  const secondaryColor = template.colorScheme.secondary || "#d4af37";
   const pagePadding =
     data.globalSettings?.pagePadding ?? template.spacing.contentPadding;
   const sectionSpacing =
     data.globalSettings?.sectionSpacing ?? template.spacing.sectionGap;
   const paragraphSpacing =
     data.globalSettings?.paragraphSpacing ?? template.spacing.itemGap;
-  const headerFontSize = (data.globalSettings?.headerSize ?? 28) + 6;
+  const headerFontSize = (data.globalSettings?.headerSize ?? 28) + 2;
   const subheaderFontSize = data.globalSettings?.subheaderSize ?? 18;
-  const textColor = "#0f172a";
-  const labelColor = "#0c275c";
-  const goldAccent = "#c99a3b";
+  const baseTextColor = template.colorScheme.text || "#1f2937";
 
   const enabledSections = data.menuSections.filter((section) => section.enabled);
   const sortedSections = [...enabledSections].sort((a, b) => a.order - b.order);
@@ -182,6 +180,9 @@ const DemoThreeTemplate: React.FC<DemoThreeTemplateProps> = ({
     const sectionTitle =
       data.menuSections.find((item) => item.id === section.id)?.title ||
       section.id;
+    const sectionContent = renderSectionContent(section.id);
+
+    if (!sectionContent) return null;
 
     return (
       <div
@@ -189,17 +190,20 @@ const DemoThreeTemplate: React.FC<DemoThreeTemplateProps> = ({
         className="space-y-3"
         style={{ marginBottom: `${sectionSpacing}px` }}
       >
-        <div
-          className="inline-flex items-center rounded-full px-5 py-1 text-white uppercase tracking-[0.3em]"
-          style={{
-            backgroundColor: labelColor,
-            fontSize: Math.max(subheaderFontSize - 6, 12),
-          }}
-        >
-          {sectionTitle}
+        <div className="inline-flex items-center gap-3">
+          <span
+            className="rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-white"
+            style={{
+              backgroundColor: accentColor,
+              letterSpacing: "0.3rem",
+            }}
+          >
+            {sectionTitle}
+          </span>
+          <span className="h-px flex-1 bg-slate-200" />
         </div>
-        <div className="rounded-2xl border border-slate-100 bg-white/95 p-5 shadow-sm">
-          {renderSectionContent(section.id)}
+        <div className="rounded-2xl border border-slate-100 bg-white/90 px-5 py-5 shadow-sm">
+          {sectionContent}
         </div>
       </div>
     );
@@ -209,89 +213,80 @@ const DemoThreeTemplate: React.FC<DemoThreeTemplateProps> = ({
     const photoVisible = data.basic.photo && data.basic.photoConfig?.visible;
 
     return (
-      <div className="overflow-hidden rounded-t-[36px] bg-white shadow-md">
+      <div className="relative">
         <div
-          className="h-3 w-full"
+          className="h-2 w-full"
           style={{
-            backgroundColor: goldAccent,
+            backgroundColor: secondaryColor,
           }}
         />
-
-        <div className="px-8 py-10">
-          <div className="flex flex-col items-center gap-8 text-center text-slate-800 lg:flex-row lg:items-center lg:justify-between lg:text-left">
-            <div className="flex-1 space-y-5">
+        <div className="flex flex-col gap-8 px-10 py-10 lg:flex-row lg:items-center">
+          <div className="flex-1 space-y-5 text-slate-600">
+            <div className="flex flex-wrap items-center gap-3 text-xs font-semibold uppercase tracking-[0.4em] text-slate-400">
+              <span className="text-slate-500">个人简历</span>
               {data.basic.employementStatus && (
-                <span className="text-xs uppercase tracking-[0.4em] text-slate-500">
+                <span className="rounded-full bg-slate-100 px-3 py-1 tracking-[0.2em] text-slate-500">
                   {data.basic.employementStatus}
                 </span>
               )}
-              <div className="space-y-2">
-                <h1
-                  className="font-bold tracking-wide"
+            </div>
+            <div className="space-y-2 text-slate-900">
+              <h1
+                className="font-bold leading-snug"
+                style={{
+                  fontSize: `${headerFontSize}px`,
+                  color: baseTextColor,
+                }}
+              >
+                {data.basic.name || "您的姓名"}
+              </h1>
+              {data.basic.title && (
+                <p
+                  className="font-medium text-slate-500"
                   style={{
-                    fontSize: `${headerFontSize}px`,
-                    color: labelColor,
-                    textAlign: "center",
+                    fontSize: `${subheaderFontSize}px`,
                   }}
                 >
-                  {data.basic.name || "您的姓名"}
-                </h1>
-                {data.basic.title && (
-                  <p
-                    className="font-semibold text-slate-600"
-                    style={{
-                      fontSize: `${subheaderFontSize}px`,
-                      textAlign: "center",
-                    }}
-                  >
-                    {data.basic.title}
-                  </p>
-                )}
-              </div>
-
-              {data.basic.summary && (
-                <p className="text-sm leading-relaxed text-slate-600">
-                  {data.basic.summary}
+                  {data.basic.title}
                 </p>
               )}
-
-              {contactFields.length > 0 && (
-                <div className="flex flex-wrap justify-center gap-3 lg:justify-center">
-                  {contactFields.map((field) => (
-                    <div
-                      key={field.key}
-                      className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-xs font-medium text-slate-600"
-                    >
-                      <span className="text-slate-400">{field.label}：</span>
-                      <span className="text-slate-700">{field.value}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
-
-            {photoVisible && (
-              <div className="flex justify-center">
-                <div
-                  className="rounded-3xl border-4 border-white shadow-lg"
-                  style={{
-                    width: data.basic.photoConfig?.width || 140,
-                    height: data.basic.photoConfig?.height || 180,
-                    borderRadius: getBorderRadiusValue(data.basic.photoConfig),
-                    overflow: "hidden",
-                    backgroundColor: "#f3f4f6",
-                    boxShadow: "0 20px 40px rgba(15,23,42,0.15)",
-                  }}
-                >
-                  <img
-                    src={data.basic.photo}
-                    alt={`${data.basic.name || "avatar"} photo`}
-                    className="h-full w-full object-cover"
-                  />
-                </div>
+            {contactFields.length > 0 && (
+              <div className="grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+                {contactFields.map((field) => (
+                  <div
+                    key={field.key}
+                    className="rounded-xl border border-slate-100 bg-slate-50/80 px-4 py-3"
+                  >
+                    <span className="text-xs uppercase tracking-[0.3em] text-slate-400">
+                      {field.label}
+                    </span>
+                    <p className="mt-1 font-semibold text-slate-700">
+                      {field.value}
+                    </p>
+                  </div>
+                ))}
               </div>
             )}
           </div>
+          {photoVisible && (
+            <div className="shrink-0 self-start rounded-3xl border border-slate-200 bg-white p-4 shadow-[0_15px_45px_rgba(15,23,42,0.08)]">
+              <div
+                style={{
+                  width: data.basic.photoConfig?.width || 120,
+                  height: data.basic.photoConfig?.height || 150,
+                  borderRadius: getBorderRadiusValue(data.basic.photoConfig),
+                  overflow: "hidden",
+                }}
+              >
+                <img
+                  src={data.basic.photo}
+                  alt={`${data.basic.name || "avatar"} photo`}
+                  className="h-full w-full object-cover"
+                />
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );
@@ -299,49 +294,49 @@ const DemoThreeTemplate: React.FC<DemoThreeTemplateProps> = ({
 
   return (
     <div
-      className="w-full min-h-screen"
+      className="min-h-screen w-full"
       style={{
-        backgroundColor: "#e9edf5",
-        color: textColor,
+        backgroundColor: template.colorScheme.background,
+        color: baseTextColor,
       }}
     >
       <div
-        className="mx-auto max-w-full"
+        className="mx-auto max-w-[980px]"
         style={{
           padding: `${pagePadding}px`,
         }}
       >
-        <div className="overflow-hidden rounded-[36px] border border-slate-200 bg-gradient-to-b from-white via-white to-[#f4f6fb] shadow-2xl">
+        <div className="overflow-hidden rounded-[32px] border border-slate-100 bg-white shadow-[0_35px_60px_rgba(15,23,42,0.08)]">
           {renderHeader()}
-
-          <div className="px-10 py-12">
-            <div className="grid gap-12 lg:grid-cols-[3fr_2fr]">
-              <div className="space-y-8">
+          <div className="bg-slate-50/60 px-10 py-10">
+            <div className="grid gap-8 lg:grid-cols-[2.2fr_1.2fr]">
+              <div className="space-y-6">
                 {primarySections.map((section) => (
                   <SectionBlock key={section.id} section={section} />
                 ))}
               </div>
-
-              <div className="space-y-8">
+              <div className="space-y-6">
                 {secondarySections.map((section) => (
                   <SectionBlock key={section.id} section={section} />
                 ))}
-
                 {data.basic.githubContributionsVisible && (
                   <div
                     className="space-y-3"
                     style={{ marginTop: `${sectionSpacing}px` }}
                   >
-                    <div
-                      className="inline-flex items-center rounded-full px-5 py-1 text-white uppercase tracking-[0.3em]"
-                      style={{
-                        backgroundColor: labelColor,
-                        fontSize: Math.max(subheaderFontSize - 6, 12),
-                      }}
-                    >
-                      GitHub
+                    <div className="inline-flex items-center gap-3">
+                      <span
+                        className="rounded-full px-4 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-white"
+                        style={{
+                          backgroundColor: accentColor,
+                          letterSpacing: "0.3rem",
+                        }}
+                      >
+                        GitHub
+                      </span>
+                      <span className="h-px flex-1 bg-slate-200" />
                     </div>
-                    <div className="rounded-2xl border border-slate-100 bg-white/95 p-5 shadow-sm">
+                    <div className="rounded-2xl border border-slate-100 bg-white px-5 py-5 shadow-sm">
                       <GithubContribution
                         githubKey={data.basic.githubKey}
                         username={data.basic.githubUseName}
