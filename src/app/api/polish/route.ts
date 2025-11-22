@@ -7,20 +7,52 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { apiKey, model, content, modelType, apiEndpoint } = body;
 
-    const modelConfig = AI_MODEL_CONFIGS[modelType as AIModelType];
-    if (!modelConfig) {
-      throw new Error("Invalid model type");
+    // 验证必需参数
+    if (!apiKey) {
+      return NextResponse.json(
+        { error: "API key is required" },
+        { status: 400 }
+      );
     }
 
-    const response = await fetch(modelConfig.url(apiEndpoint), {
-      method: "POST",
-      headers: modelConfig.headers(apiKey),
-      body: JSON.stringify({
-        model: modelConfig.requiresModelId ? model : modelConfig.defaultModel,
-        messages: [
-          {
-            role: "system",
-            content: `你是一个专业的简历优化助手。请帮助优化以下文本，使其更加专业和有吸引力。
+    const modelConfig = AI_MODEL_CONFIGS[modelType as AIModelType];
+    if (!modelConfig) {
+      return NextResponse.json(
+        { error: "Invalid model type" },
+        { status: 400 }
+      );
+    }
+
+    // 验证模型 ID（如果需要）
+    if (modelConfig.requiresModelId && !model) {
+      return NextResponse.json(
+        { error: "Model ID is required" },
+        { status: 400 }
+      );
+    }
+
+    // 验证 API 端点（如果是 OpenAI 类型）
+    if (modelType === "openai" && !apiEndpoint) {
+      return NextResponse.json(
+        { error: "API endpoint is required for OpenAI" },
+        { status: 400 }
+      );
+    }
+
+    const isTestConnection = content === "ping";
+    const requestBody = {
+      model: modelConfig.requiresModelId ? model : modelConfig.defaultModel,
+      messages: isTestConnection
+        ? [
+            {
+              role: "user",
+              content: "ping",
+            },
+          ]
+        : [
+            {
+              role: "system",
+              content: `你是一个专业的简历优化助手。请帮助优化以下文本，使其更加专业和有吸引力。
               
               优化原则：
               1. 使用更专业的词汇和表达方式
@@ -31,16 +63,76 @@ export async function POST(req: Request) {
               6. 保留我输入的格式
               
               请直接返回优化后的文本，不要包含任何解释或其他内容。`,
-          },
-          {
-            role: "user",
-            content,
-          },
-        ],
-        stream: true,
-      }),
+            },
+            {
+              role: "user",
+              content,
+            },
+          ],
+      stream: !isTestConnection,
+    };
+
+    const response = await fetch(modelConfig.url(apiEndpoint), {
+      method: "POST",
+      headers: modelConfig.headers(apiKey),
+      body: JSON.stringify(requestBody),
     });
 
+    // 检查响应状态
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+      try {
+        const errorText = await response.text();
+        // 尝试解析 JSON 错误
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorMessage = errorJson.error?.message || errorJson.error || errorMessage;
+        } catch {
+          // 如果不是 JSON，检查是否是 HTML（如 Cloudflare 错误页面）
+          if (errorText.includes("<!DOCTYPE html>") || errorText.includes("<html")) {
+            errorMessage = "Invalid API endpoint or server error. Please check your API endpoint URL.";
+          } else if (errorText) {
+            errorMessage = errorText.substring(0, 200); // 限制错误信息长度
+          }
+        }
+      } catch (e) {
+        // 如果无法读取错误信息，使用默认消息
+        console.error("Error reading error response:", e);
+      }
+
+      return NextResponse.json(
+        { error: errorMessage },
+        { status: response.status }
+      );
+    }
+
+    // 测试连接：返回简单的成功响应
+    if (isTestConnection) {
+      try {
+        const data = await response.json();
+        // 验证响应格式是否正确（不同的 API 可能有不同的响应格式）
+        // 只要响应是有效的 JSON 且没有错误字段，就认为连接成功
+        if (data.error) {
+          return NextResponse.json(
+            { error: data.error.message || data.error || "API returned an error" },
+            { status: 500 }
+          );
+        }
+        // 检查是否有常见的成功响应字段
+        if (data.choices || data.id || data.model || data.object) {
+          return NextResponse.json({ success: true });
+        }
+        // 如果没有错误字段，也认为连接成功（某些 API 可能返回空对象或其他格式）
+        return NextResponse.json({ success: true });
+      } catch (e: any) {
+        return NextResponse.json(
+          { error: e?.message || "Failed to parse API response" },
+          { status: 500 }
+        );
+      }
+    }
+
+    // 正常润色请求：返回流式响应
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
@@ -71,6 +163,11 @@ export async function POST(req: Request) {
 
               try {
                 const data = JSON.parse(line.slice(5));
+                // 检查是否有错误
+                if (data.error) {
+                  controller.error(new Error(data.error.message || "API error"));
+                  return;
+                }
                 const content = data.choices[0]?.delta?.content;
                 if (content) {
                   controller.enqueue(encoder.encode(content));
@@ -94,10 +191,10 @@ export async function POST(req: Request) {
         Connection: "keep-alive",
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Polish error:", error);
     return NextResponse.json(
-      { error: "Failed to polish content" },
+      { error: error?.message || "Failed to polish content" },
       { status: 500 }
     );
   }
