@@ -140,6 +140,10 @@
         "currentModel": "Current Model",
         "selectModel": "Select Model",
         "getApiKey": "Get API Key",
+        "test": "Test Connection",
+        "testing": "Testing...",
+        "testSuccess": "Connection successful",
+        "testFailed": "Connection failed",
         "doubao": {
           "title": "Doubao",
           "description": "Get API key from Volcengine",
