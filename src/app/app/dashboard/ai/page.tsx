@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
-import { useTranslations } from "next-intl";
+import { useTranslations, useLocale } from "next-intl";
 import { ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,9 @@ import { cn } from "@/lib/utils";
 import IconOpenAi from "@/components/ai/icon/IconOpenAi";
 
 const AISettingsPage = () => {
+  const t = useTranslations();
+  const locale = useLocale();
+  
   const {
     doubaoApiKey,
     doubaoModelId,
@@ -37,15 +40,25 @@ const AISettingsPage = () => {
     setSelectedModel
   } = useAIConfigStore();
 
-  const [currentModel, setCurrentModel] = useState("");
+  const [currentModel, setCurrentModel] = useState(selectedModel || "deepseek");
 
   useEffect(() => {
-    setCurrentModel(selectedModel);
+    if (selectedModel) {
+      setCurrentModel(selectedModel);
+    } else if (!currentModel) {
+      setCurrentModel("deepseek");
+    }
   }, [selectedModel]);
 
   const [isTesting, setIsTesting] = useState(false);
 
   const handleTestConnection = async () => {
+    // 验证是否选择了模型
+    if (!currentModel) {
+      toast.error(t("dashboard.settings.ai.testFailed") + ": " + t("dashboard.settings.ai.selectModel"));
+      return;
+    }
+
     setIsTesting(true);
     try {
       const modelType = currentModel as "doubao" | "deepseek" | "openai";
@@ -64,26 +77,28 @@ const AISettingsPage = () => {
       const apiEndpoint = modelType === "openai" ? openaiApiEndpoint : "";
 
       // 验证必需字段
+      const requiredText = locale === "zh" ? "不能为空" : "is required";
+      
       if (!apiKey) {
-        toast.error(t("dashboard.settings.ai.testFailed") + ": " + t(`dashboard.settings.ai.${modelType}.apiKey`) + " is required");
+        toast.error(`${t("dashboard.settings.ai.testFailed")}: ${t(`dashboard.settings.ai.${modelType}.apiKey`)} ${requiredText}`);
         setIsTesting(false);
         return;
       }
 
       if (modelType === "doubao" && !model) {
-        toast.error(t("dashboard.settings.ai.testFailed") + ": " + t("dashboard.settings.ai.doubao.modelId") + " is required");
+        toast.error(`${t("dashboard.settings.ai.testFailed")}: ${t("dashboard.settings.ai.doubao.modelId")} ${requiredText}`);
         setIsTesting(false);
         return;
       }
 
       if (modelType === "openai" && !model) {
-        toast.error(t("dashboard.settings.ai.testFailed") + ": " + t("dashboard.settings.ai.openai.modelId") + " is required");
+        toast.error(`${t("dashboard.settings.ai.testFailed")}: ${t("dashboard.settings.ai.openai.modelId")} ${requiredText}`);
         setIsTesting(false);
         return;
       }
 
       if (modelType === "openai" && !apiEndpoint) {
-        toast.error(t("dashboard.settings.ai.testFailed") + ": " + t("dashboard.settings.ai.openai.apiEndpoint") + " is required");
+        toast.error(`${t("dashboard.settings.ai.testFailed")}: ${t("dashboard.settings.ai.openai.apiEndpoint")} ${requiredText}`);
         setIsTesting(false);
         return;
       }
@@ -100,7 +115,24 @@ const AISettingsPage = () => {
         })
       });
 
-      const data = await res.json();
+      // 尝试解析响应
+      let data;
+      try {
+        const text = await res.text();
+        if (!text) {
+          throw new Error("Empty response");
+        }
+        data = JSON.parse(text);
+      } catch (parseError) {
+        // 如果解析失败，可能是 HTML 错误页面（如 Cloudflare 错误）
+        console.error("Failed to parse response:", parseError);
+        const errorMsg = locale === "zh" 
+          ? "服务器响应无效，请检查 API 端点 URL"
+          : "Invalid response from server. Please check your API endpoint.";
+        toast.error(`${t("dashboard.settings.ai.testFailed")}: ${errorMsg}`);
+        setIsTesting(false);
+        return;
+      }
 
       if (res.ok && data.success) {
         toast.success(t("dashboard.settings.ai.testSuccess"));
@@ -119,8 +151,6 @@ const AISettingsPage = () => {
       setIsTesting(false);
     }
   };
-
-  const t = useTranslations();
 
   const handleApiKeyChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -385,7 +415,7 @@ const AISettingsPage = () => {
                     <div>
                       <Button
                         onClick={handleTestConnection}
-                        disabled={isTesting}
+                        disabled={isTesting || !currentModel}
                         className={cn("h-11")}
                       >
                         {isTesting
