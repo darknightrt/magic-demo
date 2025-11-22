@@ -4,6 +4,8 @@ import { useTranslations } from "next-intl";
 import { ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 import DeepSeekLogo from "@/components/ai/icon/IconDeepseek";
 import IconDoubao from "@/components/ai/icon/IconDoubao";
 import {
@@ -40,6 +42,55 @@ const AISettingsPage = () => {
   useEffect(() => {
     setCurrentModel(selectedModel);
   }, [selectedModel]);
+
+  const [isTesting, setIsTesting] = useState(false);
+
+  const handleTestConnection = async () => {
+    setIsTesting(true);
+    try {
+      const modelType = currentModel as "doubao" | "deepseek" | "openai";
+      const apiKey =
+        modelType === "doubao"
+          ? doubaoApiKey
+          : modelType === "openai"
+          ? openaiApiKey
+          : deepseekApiKey;
+      const model =
+        modelType === "doubao"
+          ? doubaoModelId
+          : modelType === "openai"
+          ? openaiModelId
+          : "";
+      const apiEndpoint = modelType === "openai" ? openaiApiEndpoint : "";
+
+      const res = await fetch("/api/polish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          apiKey,
+          model,
+          content: "ping",
+          modelType,
+          apiEndpoint
+        })
+      });
+
+      if (res.ok) {
+        toast.success(t("dashboard.settings.ai.testSuccess"));
+      } else {
+        const msg = await res.text();
+        toast.error(
+          `${t("dashboard.settings.ai.testFailed")}${msg ? `: ${msg}` : ""}`
+        );
+      }
+    } catch (e: any) {
+      toast.error(
+        `${t("dashboard.settings.ai.testFailed")}: ${e?.message || "Unknown"}`
+      );
+    } finally {
+      setIsTesting(false);
+    }
+  };
 
   const t = useTranslations();
 
@@ -303,6 +354,17 @@ const AISettingsPage = () => {
                         />
                       </div>
                     )}
+                    <div>
+                      <Button
+                        onClick={handleTestConnection}
+                        disabled={isTesting}
+                        className={cn("h-11")}
+                      >
+                        {isTesting
+                          ? t("dashboard.settings.ai.testing")
+                          : t("dashboard.settings.ai.test")}
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )
