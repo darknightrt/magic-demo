@@ -141,6 +141,10 @@
         "currentModel": "当前使用的模型",
         "selectModel": "选择模型",
         "getApiKey": "获取 API Key",
+        "test": "测试连接",
+        "testing": "测试中...",
+        "testSuccess": "连接正常",
+        "testFailed": "连接失败",
         "doubao": {
           "title": "豆包",
           "description": "在火山引擎获取 API 密钥",
@@ -195,7 +199,7 @@
         "description": "顶部色带 + 轻量分栏的现代经典布局"
       },
       "demoThree": {
-        "name": "热门个人模版",
+        "name": "经典个人模版",
         "description": "顶部渐变色横条 + 双列内容，突出主题色和自定义差异"
       }
     }
@@ -658,4 +662,3 @@
     }
   }
 }
-
