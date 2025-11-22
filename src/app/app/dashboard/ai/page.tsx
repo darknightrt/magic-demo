@@ -4,8 +4,6 @@ import { useTranslations } from "next-intl";
 import { ExternalLink } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
 import DeepSeekLogo from "@/components/ai/icon/IconDeepseek";
 import IconDoubao from "@/components/ai/icon/IconDoubao";
 import {
@@ -38,53 +36,12 @@ const AISettingsPage = () => {
   } = useAIConfigStore();
 
   const [currentModel, setCurrentModel] = useState("");
-const [isTesting, setIsTesting] = useState(false);
 
   useEffect(() => {
     setCurrentModel(selectedModel);
   }, [selectedModel]);
 
   const t = useTranslations();
-
-const handleTest = async () => {
-  const model = currentModel as "doubao" | "deepseek" | "openai";
-  const isConfigured =
-    model === "doubao"
-      ? doubaoApiKey && doubaoModelId
-      : model === "openai"
-          ? openaiApiKey && openaiModelId && openaiApiEndpoint
-          : deepseekApiKey;
-
-  if (!isConfigured) {
-    toast.error("请先配置 ApiKey 和 模型Id");
-    return;
-  }
-
-  try {
-    setIsTesting(true);
-    const res = await fetch("/api/polish", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        content: "测试",
-        apiKey: model === "doubao" ? doubaoApiKey : model === "openai" ? openaiApiKey : deepseekApiKey,
-        apiEndpoint: model === "openai" ? openaiApiEndpoint : undefined,
-        model: model === "doubao" ? doubaoModelId : model === "openai" ? openaiModelId : undefined,
-        modelType: model
-      })
-    });
-    if (res.ok) {
-      toast.success("测试成功");
-    } else {
-      const data = await res.json().catch(() => null);
-      toast.error((data && (data.error?.message || data.error)) || "测试失败");
-    }
-  } catch (e: any) {
-    toast.error(e?.message || "测试失败");
-  } finally {
-    setIsTesting(false);
-  }
-};
 
   const handleApiKeyChange = async (
     e: React.ChangeEvent<HTMLInputElement>,
@@ -346,11 +303,6 @@ const handleTest = async () => {
                         />
                       </div>
                     )}
-                    <div className="pt-2">
-                      <Button onClick={handleTest} disabled={isTesting} className="h-10">
-                        {isTesting ? "测试中..." : "测试"}
-                      </Button>
-                    </div>
                   </div>
                 </div>
               )
