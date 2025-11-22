@@ -63,6 +63,31 @@ const AISettingsPage = () => {
           : "";
       const apiEndpoint = modelType === "openai" ? openaiApiEndpoint : "";
 
+      // 验证必需字段
+      if (!apiKey) {
+        toast.error(t("dashboard.settings.ai.testFailed") + ": " + t(`dashboard.settings.ai.${modelType}.apiKey`) + " is required");
+        setIsTesting(false);
+        return;
+      }
+
+      if (modelType === "doubao" && !model) {
+        toast.error(t("dashboard.settings.ai.testFailed") + ": " + t("dashboard.settings.ai.doubao.modelId") + " is required");
+        setIsTesting(false);
+        return;
+      }
+
+      if (modelType === "openai" && !model) {
+        toast.error(t("dashboard.settings.ai.testFailed") + ": " + t("dashboard.settings.ai.openai.modelId") + " is required");
+        setIsTesting(false);
+        return;
+      }
+
+      if (modelType === "openai" && !apiEndpoint) {
+        toast.error(t("dashboard.settings.ai.testFailed") + ": " + t("dashboard.settings.ai.openai.apiEndpoint") + " is required");
+        setIsTesting(false);
+        return;
+      }
+
       const res = await fetch("/api/polish", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -75,17 +100,20 @@ const AISettingsPage = () => {
         })
       });
 
-      if (res.ok) {
+      const data = await res.json();
+
+      if (res.ok && data.success) {
         toast.success(t("dashboard.settings.ai.testSuccess"));
       } else {
-        const msg = await res.text();
+        const errorMsg = data.error || `HTTP ${res.status}: ${res.statusText}`;
         toast.error(
-          `${t("dashboard.settings.ai.testFailed")}${msg ? `: ${msg}` : ""}`
+          `${t("dashboard.settings.ai.testFailed")}: ${errorMsg}`
         );
       }
     } catch (e: any) {
+      console.error("Test connection error:", e);
       toast.error(
-        `${t("dashboard.settings.ai.testFailed")}: ${e?.message || "Unknown"}`
+        `${t("dashboard.settings.ai.testFailed")}: ${e?.message || "Unknown error"}`
       );
     } finally {
       setIsTesting(false);
