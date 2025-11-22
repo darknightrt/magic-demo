@@ -9,6 +9,9 @@ import { useResumeStore } from "@/store/useResumeStore";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { AI_MODEL_CONFIGS } from "@/config/ai";
 
 import classic from "@/assets/images/template-cover/classic.png";
 import modern from "@/assets/images/template-cover/modern.png";
