@@ -7,7 +7,6 @@ import { cn } from "@/lib/utils";
 import { useResumeStore } from "@/store/useResumeStore";
 import ResumeTemplateComponent from "../templates";
 import PreviewDock from "./PreviewDock";
-import AutoOptimizeButton from "./AutoOptimizeButton";
 
 interface PreviewPanelProps {
   sidePanelCollapsed: boolean;
@@ -153,16 +152,15 @@ const PreviewPanel = ({
       }}
     >
       <div className="py-4 ml-4 px-4 min-h-screen flex justify-center scale-[58%] origin-top md:scale-90 md:origin-top-left">
-        <div className="relative flex items-start gap-4 md:gap-6">
-          <div
-            ref={startRef}
-            className={cn(
-              "w-[210mm] min-w-[210mm] min-h-[297mm]",
-              "bg-white",
-              "shadow-lg",
-              "relative"
-            )}
-          >
+        <div
+          ref={startRef}
+          className={cn(
+            "w-[210mm] min-w-[210mm] min-h-[297mm]",
+            "bg-white",
+            "shadow-lg",
+            "relative mx-auto"
+          )}
+        >
           <div
             ref={resumeContentRef}
             id="resume-preview"
@@ -235,11 +233,6 @@ const PreviewPanel = ({
                 </div>
               </>
             )}
-          </div>
-          </div>
-          {/* 一键优化按钮 - 放在简历模板右边 */}
-          <div className="hidden md:block sticky top-4 mt-4 z-10">
-            <AutoOptimizeButton />
           </div>
         </div>
       </div>
